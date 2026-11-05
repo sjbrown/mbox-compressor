@@ -7,6 +7,7 @@ contains a newline and the first blank line always ends the header block.
 
 import os
 import re
+import shutil
 
 STEM_RE = re.compile(r"^\d{8}T\d{6}-[0-9a-f]+$")
 
@@ -40,6 +41,12 @@ def read_message(path):
 def header_values(headers, name):
     name = name.lower()
     return [v for n, v in headers if n.lower() == name]
+
+
+def install_viewer(root):
+    """Copy the standalone view.py into the archive root."""
+    src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "view.py")
+    shutil.copyfile(src, os.path.join(root, "view.py"))
 
 
 def iter_message_files(root):

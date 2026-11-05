@@ -63,7 +63,10 @@ def test_html_alternative_split_off(write_mbox, tmp_path):
     assert body == "Plain version."
     (link,) = header_values(headers, "X-HTML-Body")
     html_path = os.path.join(os.path.dirname(path), link)
-    assert open(html_path, encoding="utf-8").read().count("<b>version</b>") == 1
+    stored = open(html_path, encoding="utf-8").read()
+    assert stored.count("<b>version</b>") == 1
+    assert stored.startswith(split.HTML_PREAMBLE)
+    assert "default-src 'none'" in split.HTML_PREAMBLE
     assert "<b>" not in open(path, encoding="utf-8").read()
     assert header_values(headers, "X-Body-Derived") == []
 

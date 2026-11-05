@@ -1,4 +1,7 @@
 import os
+import re
+import subprocess
+import sys
 
 from conftest import make_msg
 from mboxcompress.__main__ import main
@@ -37,3 +40,21 @@ def test_split_compress_view(write_mbox, tmp_path):
     assert "Content-Security-Policy" in page1
     assert (comp_dir / "2025" / "attachments").is_dir()
     assert os.listdir(comp_dir / "2025" / "html_bodies")
+    csp = re.search(r"Content-Security-Policy&quot; content=&quot;(.*?)&quot;", page1).group(1)
+    assert csp.startswith("default-src &#x27;none&#x27;") and "http" not in csp
+
+
+def test_archive_carries_standalone_viewer(write_mbox, tmp_path):
+    mbox = write_mbox([make_msg(subject="Solo", body=ORIG)])
+    split_dir, comp_dir = tmp_path / "split", tmp_path / "comp"
+    main(["split", str(mbox), str(split_dir)])
+    main(["compress", str(split_dir), str(comp_dir)])
+    for root in (split_dir, comp_dir):
+        viewer = root / "view.py"
+        assert viewer.exists()
+        msg = iter_message_files(str(root))[0]
+        out = tmp_path / f"{root.name}.html"
+        # -I and a foreign cwd: the copy must work without the package installed.
+        subprocess.run([sys.executable, "-I", str(viewer), msg, "-o", str(out)],
+                       cwd=str(tmp_path), check=True, capture_output=True)
+        assert "Solo" in out.read_text()

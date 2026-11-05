@@ -24,7 +24,7 @@ import re
 import sys
 from html.parser import HTMLParser
 
-from .archive import format_message
+from .archive import format_message, install_viewer
 
 KEEP_HEADERS = [
     "From", "To", "Cc", "Bcc", "Reply-To", "Date", "Subject",
@@ -36,6 +36,14 @@ FROM_LINE_RE = re.compile(
     r"(\w{3}) +(\w{3}) +(\d{1,2}) +(\d{1,2}:\d\d:\d\d)(?: +([+-]\d{4}))? +(\d{4})"
 )
 UNSAFE_NAME_RE = re.compile(r'[\x00-\x1f/\\:*?"<>|]+')
+
+# Written at the top of every stored HTML body so that opening one directly
+# never fetches remote content.
+HTML_PREAMBLE = (
+    '<meta charset="utf-8">\n'
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; '
+    'img-src file: data:; style-src \'unsafe-inline\' file:; font-src file: data:">\n'
+)
 
 mimetypes.add_type("message/rfc822", ".eml")
 mimetypes.add_type("text/calendar", ".ics")
@@ -344,7 +352,7 @@ class Splitter:
             hdir = os.path.join(year_dir, "html_bodies")
             os.makedirs(hdir, exist_ok=True)
             with open(os.path.join(hdir, stem + ".html"), "w", encoding="utf-8") as f:
-                f.write('<meta charset="utf-8">\n' + html_src)
+                f.write(HTML_PREAMBLE + html_src)
             headers.append(("X-HTML-Body", f"./html_bodies/{stem}.html"))
             self.stats["html"] += 1
             if not body.strip():
@@ -389,4 +397,5 @@ def run(mbox_paths, out_root, tz=None, keep_links=False, extra_headers=(), progr
             n = splitter.stats["messages"]
             if progress and n and n % 1000 == 0:
                 print(f"{n} messages", file=sys.stderr)
+    install_viewer(out_root)
     return splitter.stats

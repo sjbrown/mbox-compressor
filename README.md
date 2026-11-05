@@ -25,6 +25,7 @@ archive/
     html_bodies/20250106T100000-0ca79.html
     attachments/0703319ff5-map.png
   errors/000001.eml        # anything that failed to convert, saved raw
+  view.py                  # standalone viewer; its docstring documents this layout
 ```
 
 A message file looks like:
@@ -51,6 +52,8 @@ We should move the offsite to ...
   The suffix is a hash of the Message-ID; repeated Message-IDs are skipped.
 - HTML-only messages get a plaintext body derived from the HTML, marked
   `X-Body-Derived: html`. Links are dropped from it unless `--keep-links`.
+- Stored HTML bodies start with a Content-Security-Policy that blocks all
+  remote content, so opening one directly never loads tracking pixels.
 - Attachments are named by content hash, so a file sent many times in a year is
   stored once. Inline `cid:` images in the HTML are rewritten to point at them.
   Extensions are guessed from the MIME type when the filename has none.
@@ -61,7 +64,7 @@ We should move the offsite to ...
 mbox-compressor compress archive/ archive-compact/
 ```
 
-Writes a new archive. Message files are rewritten; HTML bodies and attachments
+Writes a new archive (with its own `view.py`). Message files are rewritten; HTML bodies and attachments
 are hard-linked (copied if hard links aren't possible).
 
 Every sentence is normalized (quote markers, whitespace, punctuation and case
@@ -94,7 +97,15 @@ mbox-compressor view archive-compact/2025/20250107T100000-995fe.txt --open
 Writes `/tmp/mail-view/<stem>.html` (or `-o PATH`): headers, attachments
 (images inline), the HTML body in a sandboxed frame, and the text body. Elided
 quotes expand in place from the messages they point to, up to `--depth` (3)
-levels. Remote images in HTML bodies are blocked unless `--remote-images`.
+levels. Remote content is never loaded.
+
+Every archive also carries a copy of the viewer at its root, which needs only
+the Python standard library:
+
+```bash
+cd archive-compact
+python3 view.py 2025/20250107T100000-995fe.txt --open
+```
 
 ## Tests
 

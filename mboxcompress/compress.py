@@ -21,7 +21,7 @@ import os
 import re
 import shutil
 
-from .archive import format_message, iter_message_files, parse_message
+from .archive import format_message, install_viewer, iter_message_files, parse_message
 
 QUOTE_RE = re.compile(r"^[ \t]*>")
 QUOTE_PREFIX_RE = re.compile(r"^(?:[ \t]*>)+[ \t]?")
@@ -312,4 +312,5 @@ def run(in_root, out_root, min_elide_chars=100, match_ratio=0.8):
             for sub in ("html_bodies", "attachments"):
                 if os.path.isdir(os.path.join(src, sub)):
                     _mirror_tree(os.path.join(src, sub), os.path.join(out_root, entry, sub))
+    install_viewer(out_root)
     return comp.stats

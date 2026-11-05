@@ -1,6 +1,5 @@
 import argparse
 import sys
-import webbrowser
 
 
 def _tz(name):
@@ -29,13 +28,13 @@ def main(argv=None):
     c.add_argument("--min-elide-chars", type=int, default=100)
     c.add_argument("--match-ratio", type=float, default=0.8)
 
-    v = sub.add_parser("view", help="render one message .txt to an HTML page")
-    v.add_argument("message")
-    v.add_argument("-o", "--out")
-    v.add_argument("--depth", type=int, default=3, help="levels of elided quotes to expand")
-    v.add_argument("--remote-images", action="store_true")
-    v.add_argument("--open", action="store_true", help="open in a browser")
+    sub.add_parser("view", help="render one message .txt to an HTML page", add_help=False)
 
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv[:1] == ["view"]:
+        from . import view
+        return view.main(argv[1:])
     a = ap.parse_args(argv)
     if a.cmd == "split":
         from . import split
@@ -45,13 +44,6 @@ def main(argv=None):
         from . import compress
         stats = compress.run(a.archive, a.out, min_elide_chars=a.min_elide_chars,
                              match_ratio=a.match_ratio)
-    else:
-        from . import view
-        path = view.write_view(a.message, a.out, depth=a.depth, remote=a.remote_images)
-        print(path)
-        if a.open:
-            webbrowser.open("file://" + path)
-        return 0
     for k, val in stats.items():
         print(f"{k}: {val}", file=sys.stderr)
     return 0

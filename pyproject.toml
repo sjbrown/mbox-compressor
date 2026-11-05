@@ -1,0 +1,20 @@
+[project]
+name = "mbox-compressor"
+version = "0.1.0"
+description = "Turn a Gmail Takeout mbox into a greppable one-file-per-message archive"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+html = ["html2text"]
+test = ["pytest", "html2text"]
+
+[project.scripts]
+mbox-compressor = "mboxcompress.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mboxcompress"]
